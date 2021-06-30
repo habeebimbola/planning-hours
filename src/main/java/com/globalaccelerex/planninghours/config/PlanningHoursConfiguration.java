@@ -10,9 +10,4 @@ import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 @EnableWebMvc
 public class PlanningHoursConfiguration {
 
-    @Bean
-    public RestTemplate getRestTemplate(){
-        RestTemplate restTemplate = new RestTemplateBuilder().build();
-        return restTemplate;
-    }
 }

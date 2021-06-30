@@ -21,11 +21,9 @@ import org.springframework.web.client.RestTemplate;
 public class PlanningHoursController {
 
     private final Logger logger = LoggerFactory.getLogger(PlanningHoursController.class);
-    private final RestTemplate restTemplate;
     private final ObjectMapper mapper = new ObjectMapper();
 
-    public PlanningHoursController(RestTemplate restTemplate) {
-        this.restTemplate = restTemplate;
+    public PlanningHoursController() {
     }
 
     @PostMapping()

@@ -7,7 +7,6 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.List;
 import java.util.ListIterator;
 
 @JsonSerialize
@@ -15,12 +14,13 @@ import java.util.ListIterator;
 public class FormattedPlanningHour {
 
     private static final Logger logger = LoggerFactory.getLogger(FormattedPlanningHour.class);
-
     @JsonIgnore
     private PlanningHour planningHour;
     private static final java.lang.String CLOSED = "CLOSED";
     private static final String CLOSE = "close";
     private static final String OPEN = "open";
+    private boolean isOpen = false;
+     private boolean didNotCloseSameDay = false;
 
     @JsonProperty("monday")
     private String monday;
@@ -52,30 +52,39 @@ public class FormattedPlanningHour {
 
         if (this.planningHour.getMonday().isEmpty()) {
             monday = CLOSED;
-        }else{
+        }else
+            {
         ListIterator<PlanningPeriod> listIterator = this.planningHour.getMonday().listIterator();
         StringBuilder mondayBuilder = new StringBuilder();
-
-        int  pairCount = 0; boolean isOpen = false;
+        final int size = this.planningHour.getMonday().size();
+        int  pairCount = 0;
 
         while (listIterator.hasNext()) {
             PlanningPeriod planningPeriod = listIterator.next();
 
-            if (planningPeriod.getType().equalsIgnoreCase(OPEN)) {
-                mondayBuilder.append(planningPeriod.getValue());
+            if (planningPeriod.getType().equalsIgnoreCase(OPEN) && !isOpen) {
+                mondayBuilder.append(planningPeriod.getValueStr());
                 isOpen = true;
             }
 
-            if(planningPeriod.getType().equalsIgnoreCase(CLOSE))
+            if(planningPeriod.getType().equalsIgnoreCase(CLOSE) && isOpen )
             {
-                mondayBuilder.append("-").append(planningPeriod.getValue());
+                mondayBuilder.append("-").append(planningPeriod.getValueStr());
+                isOpen = false;
+                didNotCloseSameDay = false;
             }
 
             pairCount++;
 
-            if((pairCount % 2 ) == 0)
+
+            if((pairCount % 2 ) == 0 && pairCount != size )
             {
                 mondayBuilder.append(",");
+            }
+
+            if( pairCount == size && planningPeriod.getType().equalsIgnoreCase(OPEN))
+            {
+                didNotCloseSameDay = true;
             }
         }
         monday = mondayBuilder.toString();}
@@ -91,24 +100,31 @@ public class FormattedPlanningHour {
         StringBuilder tuesdayBuilder = new StringBuilder();
 
         ListIterator<PlanningPeriod> listIterator = this.planningHour.getTuesday().listIterator();
-        int pairCount = 0;
+        int pairCount = 0, size = this.planningHour.getTuesday().size();
 
         while (listIterator.hasNext()) {
             PlanningPeriod planningPeriod = listIterator.next();
 
-            if (planningPeriod.getType().equalsIgnoreCase(OPEN)) {
-                tuesdayBuilder.append(planningPeriod.getValue());
+            if (planningPeriod.getType().equalsIgnoreCase(OPEN) && !isOpen) {
+                tuesdayBuilder.append(planningPeriod.getValueStr());
+                isOpen = true;
             }
 
-            if(planningPeriod.getType().equalsIgnoreCase(CLOSE))
+            if(planningPeriod.getType().equalsIgnoreCase(CLOSE) && isOpen )
             {
-                tuesdayBuilder.append("-").append(planningPeriod.getValue());
+                tuesdayBuilder.append("-").append(planningPeriod.getValueStr());
+                isOpen = false;
+                didNotCloseSameDay = false;
             }
             pairCount++;
 
-            if( (pairCount%2) == 0 )
+            if( (pairCount % 2 ) == 0 && pairCount != size )
             {
                 tuesdayBuilder.append(",");
+            }
+            if(pairCount ==size && planningPeriod.getType().equalsIgnoreCase(OPEN))
+            {
+                didNotCloseSameDay = true;
             }
         }
         tuesday = tuesdayBuilder.toString();}
@@ -123,22 +139,32 @@ public class FormattedPlanningHour {
         StringBuilder wednesdayBuilder = new StringBuilder();
 
         ListIterator<PlanningPeriod> listIterator = this.planningHour.getWednesday().listIterator();
-        int pairCount = 0;
+        int pairCount = 0, size = this.planningHour.getWednesday().size();
 
         while (listIterator.hasNext()) {
             PlanningPeriod planningPeriod = listIterator.next();
 
-            if (!planningPeriod.getType().equalsIgnoreCase(CLOSE)) {
-                wednesdayBuilder.append(planningPeriod.getValue());
+            if (!planningPeriod.getType().equalsIgnoreCase(CLOSE) && !isOpen) {
+                wednesdayBuilder.append(planningPeriod.getValueStr());
+                isOpen = true;
 
-            } else {
-                wednesdayBuilder.append("-").append(planningPeriod.getValue());
             }
+                if(planningPeriod.getType().equalsIgnoreCase(CLOSE) && isOpen)
+                {
+                    wednesdayBuilder.append("-").append(planningPeriod.getValueStr());
+                    isOpen = false;
+                }
+
+
             pairCount++;
 
-            if(pairCount % 2 == 0)
+            if(pairCount % 2 == 0 && pairCount < size )
             {
                 wednesdayBuilder.append(",");
+            }
+            if ( pairCount == size && planningPeriod.getType().equalsIgnoreCase(OPEN))
+            {
+                didNotCloseSameDay = true;
             }
         }
         wednesday = wednesdayBuilder.toString();}
@@ -153,21 +179,30 @@ public class FormattedPlanningHour {
         }else{
         StringBuilder thursdayBuilder = new StringBuilder();
         ListIterator<PlanningPeriod> listIterator = this.planningHour.getThursday().listIterator();
-        int pairCount = 0;
+        int pairCount = 0, size = this.planningHour.getThursday().size();
 
         while (listIterator.hasNext()) {
             PlanningPeriod planningPeriod = listIterator.next();
 
-            if (!planningPeriod.getType().equalsIgnoreCase(CLOSE)) {
-                thursdayBuilder.append(planningPeriod.getValue());
-            } else {
-                thursdayBuilder.append("-").append(planningPeriod.getValue());
+            if (!planningPeriod.getType().equalsIgnoreCase(CLOSE) && !isOpen) {
+                thursdayBuilder.append(planningPeriod.getValueStr());
+                isOpen = true;
             }
+            if(planningPeriod.getType().equalsIgnoreCase(CLOSE) && isOpen) {
+                thursdayBuilder.append("-").append(planningPeriod.getValueStr());
+                isOpen = false;
+                didNotCloseSameDay = false;
+            }
+
             pairCount++;
 
-            if(pairCount % 2 == 0 )
+            if(pairCount % 2 == 0 && pairCount < size )
             {
                 thursdayBuilder.append(",");
+            }
+            if( pairCount == size && planningPeriod.getType().equalsIgnoreCase(OPEN))
+            {
+                 didNotCloseSameDay = true;
             }
         }
         thursday = thursdayBuilder.toString();}
@@ -180,24 +215,29 @@ public class FormattedPlanningHour {
         if (this.planningHour.getFriday().isEmpty()) {
             friday = CLOSED;
         }
-else{
+        else{
         StringBuilder fridayBuilder = new StringBuilder();
         ListIterator<PlanningPeriod> listIterator = this.planningHour.getFriday().listIterator();
-        int pairCount = 0;
+        int pairCount = 0, size = this.planningHour.getFriday().size();
 
         while (listIterator.hasNext()) {
             PlanningPeriod planningPeriod = listIterator.next();
 
-            if (!planningPeriod.getType().equalsIgnoreCase(CLOSE)) {
-                fridayBuilder.append(planningPeriod.getValue());
-
-            } else {
-                fridayBuilder.append("-").append(planningPeriod.getValue());
+            if (planningPeriod.getType().equalsIgnoreCase(OPEN) ) {
+                fridayBuilder.append(planningPeriod.getValueStr());
+            }
+            if( planningPeriod.getType().equalsIgnoreCase(CLOSE) && isOpen) {
+                fridayBuilder.append("-").append(planningPeriod.getValueStr());
+                didNotCloseSameDay = false;
             }
             pairCount++;
-            if( pairCount % 2 == 0 )
+            if( pairCount % 2 == 0 && pairCount < size)
             {
                 fridayBuilder.append(",");
+            }
+            if( pairCount == size && planningPeriod.getType().equalsIgnoreCase(OPEN))
+            {
+                didNotCloseSameDay = true;
             }
         }
         friday = fridayBuilder.toString();
@@ -211,25 +251,33 @@ else{
         if (this.planningHour.getSaturday().isEmpty()) {
             saturday = CLOSED;
         }
-else{
+    else{
         StringBuilder saturdayBuilder = new StringBuilder();
 
         ListIterator<PlanningPeriod> listIterator = this.planningHour.getSaturday().listIterator();
-        int pairCount = 0;
+        int pairCount = 0, size = this.planningHour.getSaturday().size();
 
         while (listIterator.hasNext()) {
             PlanningPeriod planningPeriod = listIterator.next();
 
-            if(planningPeriod.getType().equalsIgnoreCase(OPEN))
+            if(planningPeriod.getType().equalsIgnoreCase(OPEN) )
             {
-                saturdayBuilder.append(planningPeriod.getValue());
-            }else {
-                saturdayBuilder.append("-").append(planningPeriod.getValue());
+                saturdayBuilder.append(planningPeriod.getValueStr());
             }
+            if(planningPeriod.getType().equalsIgnoreCase(CLOSE) && isOpen) {
+                saturdayBuilder.append("-").append(planningPeriod.getValueStr());
+                didNotCloseSameDay = false;
+            }
+
             ++pairCount;
-            if(pairCount % 2 == 0 )
+
+            if(pairCount % 2 == 0  && pairCount < size)
             {
                 saturdayBuilder.append(",");
+            }
+            if( pairCount == size && planningPeriod.getType().equalsIgnoreCase(OPEN))
+            {
+                didNotCloseSameDay = true;
             }
         }
         saturday = saturdayBuilder.toString();
@@ -246,22 +294,39 @@ else{
         StringBuilder sundayBuilder = new StringBuilder();
 
         ListIterator<PlanningPeriod> listIterator = this.planningHour.getSunday().listIterator();
-        int pairCount = 0;
+        int pairCount = 0, size = this.planningHour.getSunday().size();
+
+        if(didNotCloseSameDay && size >= 1)
+        {
+            logger.info("Hitting this block!");
+            PlanningPeriod planningPeriod = listIterator.next();
+
+            if(planningPeriod.getType().equalsIgnoreCase(CLOSE))
+            {
+                saturday = new StringBuilder(getSaturday()).append("-").append(planningPeriod.getValueStr()).toString();
+            }
+        }
 
         while (listIterator.hasNext()) {
             PlanningPeriod planningPeriod = listIterator.next();
-            if(planningPeriod.getType().equalsIgnoreCase(OPEN))
+
+            if(planningPeriod.getType().equalsIgnoreCase(OPEN) )
             {
-                sundayBuilder.append(planningPeriod.getValue());
+                sundayBuilder.append(planningPeriod.getValueStr());
             }
-            else
-                {
-                    sundayBuilder.append("-").append(planningPeriod.getValue());
+            if(planningPeriod.getType().equalsIgnoreCase(CLOSE) )
+            {
+                    sundayBuilder.append("-").append(planningPeriod.getValueStr());
+                    didNotCloseSameDay = false;
                 }
             ++pairCount;
-            if(pairCount % 2 == 0 )
+            if(pairCount % 2 == 0 && pairCount < size )
             {
                 sundayBuilder.append(",");
+            }
+            if( pairCount == size && planningPeriod.getType().equalsIgnoreCase(OPEN))
+            {
+                didNotCloseSameDay = true;
             }
         }
         sunday = sundayBuilder.toString();
